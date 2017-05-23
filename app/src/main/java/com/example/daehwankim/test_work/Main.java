@@ -2,6 +2,7 @@ package com.example.daehwankim.test_work;
 
 import android.graphics.Color;
 import android.renderscript.ScriptGroup;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.widget.Toast;
@@ -34,9 +35,10 @@ public class Main extends GVRMain{
     private GVRScene scene = null;
     private PickHandler mPickHandler;
     private GVRPicker mPicker;
+    private GVRContext gvrContext;
     @Override
     public void onInit(GVRContext gvrContext) throws Throwable {
-
+        this.gvrContext = gvrContext;
         scene = gvrContext.getMainScene();
         scene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.BLACK);
         scene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.BLACK);
@@ -50,17 +52,14 @@ public class Main extends GVRMain{
         GVRSceneObject environment = makeEnvironment(gvrContext);
         scene.addSceneObject(environment);
 
-
-
-        GVRSceneObject title = makeTitle(gvrContext);
+        GVRSceneObject title = makeTitle(gvrContext, "Private Theater", 4.0f, 2.0f, Color.WHITE, Color.YELLOW, -3.0f, 0.0f, -3.0f);
         scene.addSceneObject(title);
-
-
 
 
         mPickHandler = new PickHandler();
         scene.getEventReceiver().addListener(mPickHandler);
         mPicker = new GVRPicker(gvrContext, scene);
+
 
 
     }
@@ -74,32 +73,44 @@ public class Main extends GVRMain{
             GVRPicker.GVRPickedObject picked = picker.getPicked()[0];
             PickedObject = picked.hitObject;
             if (mPickHandler.PickedObject !=null){
-                mPickHandler.PickedObject.getRenderData().getMaterial().setDiffuseColor(0,0,1,1);
+
             }
             if (mPickHandler.PickedObject != null && mPickHandler.PickedObject instanceof GVRTextViewSceneObject){
-                ((GVRTextViewSceneObject) mPickHandler.PickedObject).setBackgroundColor(Color.BLUE);
+
             }
         }
 
         @Override
         public void onNoPick(GVRPicker picker) {
             if (mPickHandler.PickedObject !=null){
-                mPickHandler.PickedObject.getRenderData().getMaterial().setDiffuseColor(1,0,0,1);
+
             }
             if (mPickHandler.PickedObject != null && mPickHandler.PickedObject instanceof GVRTextViewSceneObject){
-                ((GVRTextViewSceneObject) mPickHandler.PickedObject).setBackgroundColor(Color.RED);
+
             }
             PickedObject = null;
         }
 
         @Override
         public void onEnter(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject collision) {
+            sceneObj.getRenderData().setRenderMask(0);
 
+
+            final Login login = new Login(gvrContext);
+
+            gvrContext.runOnGlThreadPostRender(64, new Runnable() {
+                @Override
+                public void run() {
+                    setMainscene(login);
+                }
+            });
+//            sceneObj.getRenderData().getMaterial().setDiffuseColor(0,0,1,1);
         }
 
         @Override
         public void onExit(GVRSceneObject sceneObj) {
-
+            Log.e("scene LOG : ", sceneObj.getName());
+            sceneObj.getRenderData().setRenderMask(GVRRenderData.GVRRenderMaskBit.Left | GVRRenderData.GVRRenderMaskBit.Right);
         }
 
         @Override
@@ -108,14 +119,16 @@ public class Main extends GVRMain{
         }
     }
 
+
+
     private GVRSceneObject makeEnvironment(GVRContext context){
         GVRSphereSceneObject environment = null;
         try {
             Future<GVRTexture> texture = context.getAssetLoader().loadFutureTexture(new GVRAndroidResource(context, new URL("http://images.samsung.com/is/image/samsung/global-mkt-feature-gear-360-gear-360_real360?$Download-Source$")));
 
             environment = new GVRSphereSceneObject(context, 72, 144, false, texture);
-            environment.getTransform().setScale(20.0f, 20.0f, 20.0f);//(배경구의 크기지정)
-
+            environment.getTransform().setScale(20.0f, 20.0f, 20.0f);
+            environment.setName("Environment");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -157,18 +170,29 @@ public class Main extends GVRMain{
 
 
 
-    private GVRTextViewSceneObject makeTitle(GVRContext context){
-        GVRTextViewSceneObject title = new GVRTextViewSceneObject(context, 6, 2, "Private Theater");
+    private GVRTextViewSceneObject makeTitle(GVRContext context, String text, float objectsizeX, float objectsizeY ,int backgroundColor, int TextColor, float positionX, float positionY, float positionZ){
+        GVRTextViewSceneObject title = new GVRTextViewSceneObject(context, objectsizeX, objectsizeY, text);
         GVRRenderData renderdata = title.getRenderData();
         renderdata.setAlphaBlend(true);
         title.attachComponent(new GVRMeshCollider(context, true));
-        title.getTransform().setPosition(0.0f, 0.0f, -3.0f);
-        title.setTextColor(Color.YELLOW);
+        title.getTransform().setPosition(positionX, positionY, positionZ);
+        title.setTextColor(TextColor);
         title.setGravity(Gravity.CENTER);
-        title.setBackgroundColor(Color.argb((int) 0.5f, 1, 0, 0));
+        title.setBackgroundColor(backgroundColor);
+
         return title;
     }
 
 
+    public void setMainscene(GVRScene newScene){
+        GVRScene oldScene = getGVRContext().getMainScene();
+        oldScene.getEventReceiver().removeListener(mPickHandler);
+        oldScene.getMainCameraRig().getHeadTransformObject().detachComponent(GVRPicker.getComponentType());
+        Login.PickHandler L_PickHandler = new Login.PickHandler();
+        newScene.getEventReceiver().addListener(L_PickHandler);
+        mPicker = new GVRPicker(gvrContext, newScene);
+        newScene.getMainCameraRig().getHeadTransformObject().attachComponent(mPicker);
+        getGVRContext().setMainScene(newScene);
+    }
 
 }
