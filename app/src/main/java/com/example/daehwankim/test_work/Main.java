@@ -1,7 +1,9 @@
 package com.example.daehwankim.test_work;
 
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.renderscript.ScriptGroup;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -20,11 +22,22 @@ import org.gearvrf.GVRSceneObject;
 import org.gearvrf.GVRSphereCollider;
 import org.gearvrf.GVRTexture;
 import org.gearvrf.IPickEvents;
+import org.gearvrf.scene_objects.GVRCubeSceneObject;
 import org.gearvrf.scene_objects.GVRSphereSceneObject;
 import org.gearvrf.scene_objects.GVRTextViewSceneObject;
+import org.gearvrf.scene_objects.GVRViewSceneObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.concurrent.Future;
 
 /**
@@ -36,9 +49,20 @@ public class Main extends GVRMain{
     private PickHandler mPickHandler;
     private GVRPicker mPicker;
     private GVRContext gvrContext;
+
+
+    private GVRViewSceneObject mLayoutLeftSceneObject;
+
+    MainActivity mActivity;
+
+    public Main(MainActivity activity) {
+        mActivity = activity;
+    }
+
     @Override
     public void onInit(GVRContext gvrContext) throws Throwable {
         this.gvrContext = gvrContext;
+
         scene = gvrContext.getMainScene();
         scene.getMainCameraRig().getLeftCamera().setBackgroundColor(Color.BLACK);
         scene.getMainCameraRig().getRightCamera().setBackgroundColor(Color.BLACK);
@@ -52,14 +76,12 @@ public class Main extends GVRMain{
         GVRSceneObject environment = makeEnvironment(gvrContext);
         scene.addSceneObject(environment);
 
-        GVRSceneObject title = makeTitle(gvrContext, "Private Theater", 4.0f, 2.0f, Color.WHITE, Color.YELLOW, -3.0f, 0.0f, -3.0f);
+        GVRSceneObject title = makeTitle(gvrContext, "Hello World!!!", 4.0f, 2.0f, Color.WHITE, Color.YELLOW, 0.0f, 0.0f, -3.0f);
         scene.addSceneObject(title);
-
 
         mPickHandler = new PickHandler();
         scene.getEventReceiver().addListener(mPickHandler);
         mPicker = new GVRPicker(gvrContext, scene);
-
 
 
     }
@@ -73,44 +95,28 @@ public class Main extends GVRMain{
             GVRPicker.GVRPickedObject picked = picker.getPicked()[0];
             PickedObject = picked.hitObject;
             if (mPickHandler.PickedObject !=null){
-
             }
             if (mPickHandler.PickedObject != null && mPickHandler.PickedObject instanceof GVRTextViewSceneObject){
-
             }
         }
 
         @Override
         public void onNoPick(GVRPicker picker) {
             if (mPickHandler.PickedObject !=null){
-
             }
             if (mPickHandler.PickedObject != null && mPickHandler.PickedObject instanceof GVRTextViewSceneObject){
-
             }
             PickedObject = null;
         }
 
         @Override
         public void onEnter(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject collision) {
-            sceneObj.getRenderData().setRenderMask(0);
-
-
-            final Login login = new Login(gvrContext);
-
-            gvrContext.runOnGlThreadPostRender(64, new Runnable() {
-                @Override
-                public void run() {
-                    setMainscene(login);
-                }
-            });
-//            sceneObj.getRenderData().getMaterial().setDiffuseColor(0,0,1,1);
+//            sceneObj.getRenderData().setRenderMask(0);
         }
 
         @Override
         public void onExit(GVRSceneObject sceneObj) {
-            Log.e("scene LOG : ", sceneObj.getName());
-            sceneObj.getRenderData().setRenderMask(GVRRenderData.GVRRenderMaskBit.Left | GVRRenderData.GVRRenderMaskBit.Right);
+//            sceneObj.getRenderData().setRenderMask(GVRRenderData.GVRRenderMaskBit.Left | GVRRenderData.GVRRenderMaskBit.Right);
         }
 
         @Override
@@ -160,7 +166,15 @@ public class Main extends GVRMain{
 //                    scene.removeSceneObject(mPickHandler.PickedObject);
                 }
                 if (mPickHandler.PickedObject != null && mPickHandler.PickedObject instanceof GVRTextViewSceneObject){
-                    ((GVRTextViewSceneObject) mPickHandler.PickedObject).setBackgroundColor(Color.BLUE);
+//                    ((GVRTextViewSceneObject) mPickHandler.PickedObject).setBackgroundColor(Color.BLUE);
+                    final Login login = new Login(gvrContext);
+                    gvrContext.runOnGlThreadPostRender(64, new Runnable() {
+                        @Override
+                        public void run() {
+                            setMainscene(login);
+                        }
+                    });
+                    scene.clear();
                 }
                 break;
             default:
@@ -194,5 +208,6 @@ public class Main extends GVRMain{
         newScene.getMainCameraRig().getHeadTransformObject().attachComponent(mPicker);
         getGVRContext().setMainScene(newScene);
     }
+
 
 }

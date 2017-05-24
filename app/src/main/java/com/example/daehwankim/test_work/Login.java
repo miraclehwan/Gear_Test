@@ -64,7 +64,6 @@ public class Login extends GVRScene {
         @Override
         public void onEnter(GVRSceneObject sceneObj, GVRPicker.GVRPickedObject collision) {
 //            sceneObj.getRenderData().setRenderMask(0);
-
             sceneObj.getRenderData().getMaterial().setDiffuseColor(0,0,1,1);
         }
 
